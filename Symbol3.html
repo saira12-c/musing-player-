@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern JS Music Player</title>
+    <style>
+         {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .player-card {
+            background: #1e1e1e;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 350px;
+            text-align: center;
+        }
+
+        .img-area {
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 1.5rem;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .img-area img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .song-details h2 { font-size: 1.5rem; margin-bottom: 5px; }
+        .song-details h3 { font-size: 1rem; color: #b3b3b3; font-weight: 400; }
+
+        .progress-container {
+            background: #444;
+            height: 6px;
+            width: 100%;
+            border-radius: 10px;
+            margin: 2rem 0 0.5rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: #1db954; /* Spotify Green */
+            height: 100%;
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.1s linear;
+        }
+
+        .time-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #b3b3b3;
+            margin-bottom: 1.5rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+        }
+
+        button:hover { transform: scale(1.1); color: #1db954; }
+
+        play {
+            background: #1db954;
+            color: black;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+        }
+
+        .volume-box {
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: #1db954;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="player-card">
+        <div class="img-area">
+            <img src="https://via.placeholder.com/300/1db954/FFFFFF?text=Music+Art" id="cover" alt="Cover">
+        </div>
+
+        <div class="song-details">
+            <h2 id="title">Song Name</h2>
+            <h3 id="artist">Artist Name</h3>
+        </div>
+
+        <audio id="audio"></audio>
+
+        <div class="progress-container" id="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="time-labels">
+            <span id="current-time">0:00</span>
+            <span id="duration">0:00</span>
+        </div>
+
+        <div class="controls">
+            <button id="prev">Prev</button>
+            <button id="play">Play</button>
+            <button id="next">Next</button>
+        </div>
+
+        <div class="volume-box">
+            <span>Vol</span>
+            <input type="range" id="volume" min="0" max="1" step="0.1" value="0.8">
+        </div>
+    </div>
+
+    <script>
+        /* --- JAVASCRIPT LOGIC --- */
+        const audio = document.getElementById('audio');
+        const playBtn = document.getElementById('play');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const title = document.getElementById('title');
+        const artist = document.getElementById('artist');
+        const cover = document.getElementById('cover');
+        const volumeSlider = document.getElementById('volume');
+        const currTimeText = document.getElementById('current-time');
+        const durationText = document.getElementById('duration');
+
+        // Sample Playlist (Replace with your own file names/URLs)
+        const songs = [
+            { name: 'song1', title: 'Summer Vibes', artist: 'Lofi Girl', cover: 'https://picsum.photos/id/10/300/300' },
+            { name: 'song2', title: 'Midnight Drive', artist: 'Synth Wave', cover: 'https://picsum.photos/id/20/300/300' },
+            { name: 'song3', title: 'Golden Hour', artist: 'Acoustic Soul', cover: 'https://picsum.photos/id/30/300/300' }
+        ];
+
+        let songIndex = 0;
+        let isPlaying = false;
+
+        
+        function loadSong(song) {
+            title.innerText = song.title;
+            artist.innerText = song.artist;
+            
+            audio.src = `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${songIndex + 1}.mp3`; 
+            cover.src = song.cover;
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                pauseSong();
+            } else {
+                playSong();
+            }
+        }
+
+        function playSong() {
+            isPlaying = true;
+            playBtn.innerText = 'Pause';
+            audio.play();
+        }
+
+        function pauseSong() {
+            isPlaying = false;
+            playBtn.innerText = 'Play';
+            audio.pause();
+        }
+
+        function prevSong() {
+            songIndex = (songIndex - 1 + songs.length) % songs.length;
+            loadSong(songs[songIndex]);
+            playSong();
+        }
+
+        function nextSong() {
+            songIndex = (songIndex + 1) % songs.length;
+            loadSong(songs[songIndex]);
+            playSong();
+        }
+
+        function updateProgress(e) {
+            const { duration, currentTime } = e.srcElement;
+            const progressPercent = (currentTime / duration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            
+            let curMins = Math.floor(currentTime / 60);
+            let curSecs = Math.floor(currentTime % 60);
+            if (curSecs < 10) curSecs = `0${curSecs}`;
+            currTimeText.innerText = `${curMins}:${curSecs}`;
+
+            if(duration) {
+                let durMins = Math.floor(duration / 60);
+                let durSecs = Math.floor(duration % 60);
+                if (durSecs < 10) durSecs = `0${durSecs}`;
+                durationText.innerText = `${durMins}:${durSecs}`;
+            }
+        }
+
+        function setProgress(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
+            audio.currentTime = (clickX / width) * duration;
+        }
+
+        
+        playBtn.addEventListener('click', togglePlay);
+        prevBtn.addEventListener('click', prevSong);
+        nextBtn.addEventListener('click', nextSong);
+        audio.addEventListener('timeupdate', updateProgress);
+        audio.addEventListener('ended', nextSong); // Autoplay Feature
+        progressContainer.addEventListener('click', setProgress);
+        volumeSlider.addEventListener('input', (e) => audio.volume = e.target.value);
+
+        
+        loadSong(songs[songIndex]);
+    </script>
+</body>
+</html>
